@@ -27,7 +27,7 @@ export default function Home() {
       
       const result = await response.json();
       console.log(result);
-      setResponseText(result);
+      setResponseText(result.response);
       event.target.value = ""; // Reset file input
     } catch (error) {
       setResponseText(error.message || "Error uploading file.");

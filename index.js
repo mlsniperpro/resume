@@ -48,7 +48,7 @@ const conversationArr = [
   {
     role: "system",
     content:
-      "You are a technical reviewer for the resume. Give feedback for the user's resume and areas of improvements.",
+      "You are a technical reviewer, given the user resume and some unfinished feedback, provide a comprehensive detailed and thorough analysis of the resume and suggested areas of improvements. Be highly detailed, analytical, and thorough.",
   },
 ];
 
@@ -232,7 +232,7 @@ app.post("/upload", upload.single("pdf"), async (req, res) => {
       ...conversationArr,
       {
         role: "user",
-        content: feedbackMessage,
+        content: `Resume: ${data.text}\nunfinished feedback: ${feedbackMessage} \n`,
       },
     ];
     const response = await handleSubmit(newConversationArr);
