@@ -7,7 +7,8 @@ export default function Home() {
   const [responseText, setResponseText] = useState("");
 
   const SERVER_ENDPOINT =
-    process.env.NEXT_PUBLIC_SERVER_ENDPOINT || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_SERVER_ENDPOINT ||
+    "https://resume-ge1m.onrender.com";
 
   const handleFileUpload = async (event:any) => {
     const file = event.target.files[0];
@@ -23,8 +24,9 @@ export default function Home() {
       if (!response.ok) {
         throw new Error("Server responded with an error");
       }
-
-      const result = await response.text();
+      
+      const result = await response.json();
+      console.log(result);
       setResponseText(result);
       event.target.value = ""; // Reset file input
     } catch (error) {

@@ -236,12 +236,12 @@ app.post("/upload", upload.single("pdf"), async (req, res) => {
       },
     ];
     const response = await handleSubmit(newConversationArr);
-    finalResponse = {
+    const finalResponse = {
       ...rankedData,
       response,
     }
     console.log("The final response", finalResponse);
-    res.status(200).send(response);
+    res.status(200).send(finalResponse);
   } catch (err) {
     res.status(500).send("Error processing PDF");
   }
