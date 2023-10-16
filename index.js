@@ -191,6 +191,7 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 
 app.post("/upload", upload.single("pdf"), async (req, res) => {
+  console.log("The endpoint has been hit and now is being processed")
   if (!req.file) {
     return res.status(400).send("No file uploaded");
   }
