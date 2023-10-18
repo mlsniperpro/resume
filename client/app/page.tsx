@@ -1,67 +1,32 @@
 "use client";
-
 import { useState } from "react";
 
-// Function to handle API calls
 const apiCall = async (url: string, options: RequestInit) => {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error("Server responded with an error");
-  }
-  return response.json();
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error("Server error");
+  return res.json();
 };
 
 export default function Home() {
-  const [text, setText] = useState<string>("");
-  const [responseText, setResponseText] = useState<string | null>(null);
-  const [serverData, setServerData] = useState<any>(null);
-  const [showResponse, setShowResponse] = useState<boolean>(true);
-
+  const [text, setText] = useState("");
+  const [response, setResponse] = useState<any>(null);
+  const [showResponse, toggleResponse] = useState(true);
   const SERVER_ENDPOINT =
     process.env.NEXT_PUBLIC_SERVER_ENDPOINT ||
     "https://resume-ge1m.onrender.com";
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleRequest = async (
+    url: string,
+    options: RequestInit,
+    reset: () => void
   ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("pdf", file);
-
     try {
-      const result = await apiCall(`${SERVER_ENDPOINT}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      setResponseText(result.response);
-      setServerData(result); // Store the entire result object
-      event.target.value = ""; // Reset file input
+      const result = await apiCall(url, options);
+      setResponse(result);
+      reset();
     } catch (error: any) {
-      setResponseText(error.message || "Error uploading file.");
+      setResponse({ response: error.message || "Error" });
     }
-  };
-
-  const handleTextSubmit = async () => {
-    try {
-      const result = await apiCall(`${SERVER_ENDPOINT}/print-text`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
-      });
-      setResponseText(result.response);
-      setServerData(result); // Store the entire result object
-      setText(""); // Reset text area
-    } catch (error: any) {
-      setResponseText(error.message || "Error sending text.");
-    }
-  };
-
-  const toggleResponse = () => {
-    setShowResponse(!showResponse);
   };
 
   return (
@@ -75,7 +40,17 @@ export default function Home() {
           <input
             type="file"
             accept=".pdf"
-            onChange={handleFileUpload}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const formData = new FormData();
+              formData.append("pdf", file);
+              handleRequest(
+                `${SERVER_ENDPOINT}/upload`,
+                { method: "POST", body: formData },
+                () => (e.target.value = "")
+              );
+            }}
             className="p-2 border rounded"
             aria-label="Upload PDF"
           />
@@ -91,112 +66,58 @@ export default function Home() {
             aria-label="Input text to send"
           ></textarea>
           <button
-            onClick={handleTextSubmit}
+            onClick={() =>
+              handleRequest(
+                `${SERVER_ENDPOINT}/print-text`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ text }),
+                },
+                () => setText("")
+              )
+            }
             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white p-4 rounded"
           >
             Confirm
           </button>
         </section>
-        {showResponse && responseText && (
-          <section className="mt-8 p-6 border rounded bg-gray-50">
-            <h3 className="text-2xl font-semibold mb-4">Response:</h3>
-            <p className="text-lg">{responseText}</p>
-            <button
-              onClick={toggleResponse}
-              className="mt-4 bg-red-500 hover:bg-red-600 text-white p-4 rounded"
-            >
-              Hide Response
-            </button>
-          </section>
+        {showResponse && response?.response && (
+          <ResponseSection
+            title="Response"
+            content={response.response}
+            toggle={toggleResponse}
+          />
         )}
-        {!showResponse && serverData && (
-          <section className="mt-8 p-6 border rounded bg-gray-50">
-            <h3 className="text-2xl font-semibold mb-4">
-              Additional Information:
-            </h3>
-            <div>
-              <p>
-                Double Sentence Percentage:{" "}
-                {serverData.doubleSentencePercentage}
-              </p>
-              <p>
-                Passive Words Percentage: {serverData.passiveWordsPercentage}
-              </p>
-              <p>Impactless Percentage: {serverData.impactlessPercentage}</p>
-              <p>Sub Headings: {serverData.subHeadings}</p>
-              <p>White Space Percentage: {serverData.whiteSpacePercentage}</p>
-              <p>Frequent Job Changes: {serverData.frequentJobChanges}</p>
-              <p>Age Category: {serverData.ageCategory}</p>
-              <p>
-                Has Phone Number:
-                <input
-                  type="radio"
-                  checked={serverData.hasPhoneNumber === "Yes"}
-                  readOnly
-                />{" "}
-                Yes
-                <input
-                  type="radio"
-                  checked={serverData.hasPhoneNumber === "No"}
-                  readOnly
-                />{" "}
-                No
-              </p>
-              <p>
-                Has Email:
-                <input
-                  type="radio"
-                  checked={serverData.hasEmail === "Yes"}
-                  readOnly
-                />{" "}
-                Yes
-                <input
-                  type="radio"
-                  checked={serverData.hasEmail === "No"}
-                  readOnly
-                />{" "}
-                No
-              </p>
-              <p>
-                Has LinkedIn:
-                <input
-                  type="radio"
-                  checked={serverData.hasLinkedIn === "Yes"}
-                  readOnly
-                />{" "}
-                Yes
-                <input
-                  type="radio"
-                  checked={serverData.hasLinkedIn === "No"}
-                  readOnly
-                />{" "}
-                No
-              </p>
-              <p>
-                Has Name:
-                <input
-                  type="radio"
-                  checked={serverData.hasName === "Yes"}
-                  readOnly
-                />{" "}
-                Yes
-                <input
-                  type="radio"
-                  checked={serverData.hasName === "No"}
-                  readOnly
-                />{" "}
-                No
-              </p>
-            </div>
-            <button
-              onClick={toggleResponse}
-              className="mt-4 bg-green-500 hover:bg-green-600 text-white p-4 rounded"
-            >
-              Show Response
-            </button>
-          </section>
+        {!showResponse && response && (
+          <ResponseSection
+            title="Additional Information"
+            content={JSON.stringify(response, null, 2)}
+            toggle={toggleResponse}
+          />
         )}
       </div>
     </div>
   );
 }
+
+const ResponseSection = ({
+  title,
+  content,
+  toggle,
+}: {
+  title: string;
+  content: string;
+  toggle: () => void;
+}) => (
+  <section className="mt-8 p-6 border rounded bg-gray-50">
+    <h3 className="text-2xl font-semibold mb-4">{title}:</h3>
+    <p className="text-lg">{content}</p>
+    <button
+      onClick={toggle}
+      className="mt-4 bg-red-500 hover:bg-red-600 text-white p-4 rounded"
+    >
+      Toggle
+    </button>
+  </section>
+);
